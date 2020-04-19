@@ -5,11 +5,13 @@
 ** Button.cpp
 */
 
+#include <iostream> // tmp // TODO add Error class
 #include <cmath>
 #include "Button.hpp"
 
-Button::Button(const Color &color, const float &angle, const float &distance, const Vector2f &position)
+Button::Button(const float &_semitones, const Color &color, const float &angle, const float &distance, const Vector2f &position)
 {
+    semitones = _semitones;
     colors[false] = color * Color(50, 50, 50);
     colors[true] = color;
     polygon.setPointCount(4);
@@ -23,6 +25,13 @@ Button::Button(const Color &color, const float &angle, const float &distance, co
     polygon.rotate(angle * 180.0 / M_PI + 50);
     polygon.setPosition(cos(angle) * distance + position.x, sin(angle) * distance + position.y);
     pressTime = seconds(0.5);
+    if (!sound.openFromFile("Resources/Sound/Note.ogg"))
+        cerr << "sound can't be load" << endl; // TODO add Error class
+}
+
+Button::~Button()
+{
+    sound.stop();
 }
 
 bool Button::contains(const Vector2f &point)
@@ -49,6 +58,7 @@ bool Button::contains(const Vector2f &point)
 void Button::press()
 {
     polygon.setFillColor(colors[true]);
+    playSound();
     clock.restart();
 }
 
@@ -72,4 +82,11 @@ void Button::null()
 
     polygon.setFillColor(colors[false]);
     polygon.setOutlineColor(colors[true]);
+}
+
+void Button::playSound()
+{
+    sound.stop();
+    sound.setPitch(pow(2, semitones / 12.0));
+    sound.play();
 }

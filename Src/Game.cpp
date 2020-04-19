@@ -5,6 +5,7 @@
 ** Game.cpp
 */
 
+#include <iostream> // tmp // TODO add Error class
 #include <cmath>
 #include "Game.hpp"
 
@@ -24,6 +25,13 @@ Game::Game()
     while (pressOrder.size() < 3)
         levelUp();
     canPlay = false;
+    if (!loseSound.openFromFile("Resources/Sound/GameOver.ogg"))
+        cerr << "sound can't be load" << endl; // TODO add Error class
+}
+
+Game::~Game()
+{
+    loseSound.stop();
 }
 
 void Game::run()
@@ -37,9 +45,9 @@ void Game::run()
                 pressButton(Vector2f(event.mouseButton.x, event.mouseButton.y));
         }
         window.clear();
-        for (Button &button : buttons) {
-            button.update();
-            button.aff(window);
+        for (ButtonPtr &button : buttons) {
+            button->update();
+            button->aff(window);
         }
         window.display();
     }
@@ -53,24 +61,25 @@ void Game::createButtons()
         Color::Green,
         Color(0, 255, 255),
         Color::Blue,
-        Color(255, 0, 255),
+        Color(255, 0, 255)
     };
 
     for (size_t i = 0; i < colors.size(); i++)
-        buttons.push_back(Button(colors[i], 2 * i * M_PI / (float)colors.size(), 50, Vector2f(window.getSize()) / (float)2));
+        buttons.push_back(make_unique<Button>(i * 2, colors[i], 2 * i * M_PI / (float)colors.size(), 50, Vector2f(window.getSize()) / (float)2));
 }
 
 void Game::pressButton(const Vector2f &mousePosition)
 {
-    for (Button &button : buttons)
-        if (button.contains(mousePosition)) {
-            button.press();
-            if (&button != pressOrder[index]) {
+    for (ButtonPtr &button : buttons)
+        if (button->contains(mousePosition)) {
+            if (button.get() != pressOrder[index]) {
                 canPlay = false;
-                for (Button &button2 : buttons)
-                    button2.null();
+                loseSound.play();
+                for (ButtonPtr &button2 : buttons)
+                    button2->null();
             }
             else {
+                button->press();
                 index++;
                 if (index >= pressOrder.size()) {
                     canPlay = false;
@@ -83,7 +92,7 @@ void Game::pressButton(const Vector2f &mousePosition)
 
 void Game::levelUp()
 {
-    pressOrder.push_back(&buttons[rand() % buttons.size()]);
+    pressOrder.push_back(buttons[rand() % buttons.size()].get());
     index = 0;
 }
 

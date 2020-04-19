@@ -17,6 +17,7 @@ class Game
 {
 public:
     Game();
+    ~Game();
     void run();
 
 private:
@@ -27,9 +28,10 @@ private:
 
 private:
     RenderWindow window;
-    vector<Button> buttons;
+    vector<ButtonPtr> buttons;
     vector<Button*> pressOrder;
     size_t index;
     bool canPlay;
     Thread displayThread;
+    Music loseSound; // TODO use sf::Sound
 };
